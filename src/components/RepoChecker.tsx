@@ -106,17 +106,29 @@ export default function RepoChecker() {
             onClick={() => setShowToken(!showToken)}
             className="text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
           >
-            {showToken ? 'Hide token field' : 'Add GitHub token for higher rate limits'}
+            {showToken ? 'Hide token field' : 'Add GitHub token to enable full scan (code search + higher rate limits)'}
           </button>
 
           {showToken && (
-            <input
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="ghp_xxxx (optional, stays in your browser)"
-              className="w-full mt-2 px-3 py-2 bg-ivory border border-border rounded-lg text-sm font-[family-name:var(--font-body)] focus:outline-none focus:ring-2 focus:ring-clay/40 placeholder:text-text-tertiary"
-            />
+            <div className="mt-2 space-y-2">
+              <input
+                type="password"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="ghp_xxxx (optional, stays in your browser)"
+                className="w-full px-3 py-2 bg-ivory border border-border rounded-lg text-sm font-[family-name:var(--font-body)] focus:outline-none focus:ring-2 focus:ring-clay/40 placeholder:text-text-tertiary"
+              />
+              <div className="text-xs text-text-tertiary space-y-1 leading-relaxed">
+                <p className="font-medium text-text-secondary">How to generate a token:</p>
+                <ol className="list-decimal list-inside space-y-0.5 pl-1">
+                  <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" className="underline hover:text-text-primary transition-colors">github.com/settings/tokens/new</a></li>
+                  <li>Give it a name (e.g. <span className="font-mono">litellm-checker</span>), set an expiration</li>
+                  <li>No scopes needed for public repos — leave all boxes unchecked</li>
+                  <li>Click <span className="font-medium">Generate token</span> and paste it above</li>
+                </ol>
+                <p className="text-text-tertiary/80">The token never leaves your browser.</p>
+              </div>
+            </div>
           )}
 
           {result?.error && (

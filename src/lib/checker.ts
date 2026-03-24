@@ -319,7 +319,7 @@ function buildWarning(dependencyScanIncomplete: boolean, codeSearchIncomplete: b
   }
 
   if (codeSearchIncomplete) {
-    warnings.push('GitHub code search was unavailable, so historical usage detection may be incomplete.');
+    warnings.push('GitHub code search is unavailable without a token, so historical usage could not be checked. Add a GitHub token for a complete scan.');
   }
 
   return warnings.length > 0 ? warnings.join(' ') : null;
@@ -358,7 +358,7 @@ export async function checkRepository(url: string, token?: string): Promise<Chec
       currentStatus = 'PREVIOUSLY_USED';
     }
 
-    if (currentStatus === 'NOT_FOUND' && (dependencyScan.incomplete || codeSearch.incomplete)) {
+    if (currentStatus === 'NOT_FOUND' && dependencyScan.incomplete) {
       return {
         repoFullName: repository.repoFullName,
         currentStatus,
