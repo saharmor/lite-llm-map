@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { checkRepository } from '../lib/checker';
+import { COMPROMISED_VERSIONS, LAST_SAFE_VERSION } from '../lib/constants';
 import type { CheckResult, Status } from '../lib/types';
 
 const STATUS_CONFIG: Record<Status, { bg: string; border: string; text: string; label: string; description: string }> = {
@@ -8,7 +9,7 @@ const STATUS_CONFIG: Record<Status, { bg: string; border: string; text: string; 
     border: 'border-danger/30',
     text: 'text-danger',
     label: 'Currently compromised',
-    description: 'A compromised version (1.82.7 or 1.82.8) is pinned in your lockfile. Rotate all credentials immediately.',
+    description: `A compromised version (${COMPROMISED_VERSIONS.join(' or ')}) is pinned in your dependency files. Rotate all credentials immediately.`,
   },
   AT_RISK: {
     bg: 'bg-warning-muted',
@@ -22,7 +23,7 @@ const STATUS_CONFIG: Record<Status, { bg: string; border: string; text: string; 
     border: 'border-success/30',
     text: 'text-success',
     label: 'Patched',
-    description: 'LiteLLM is in your dependencies, pinned to a safe version. If you previously ran an unpinned install, credentials may still have been exposed.',
+    description: `LiteLLM is in your dependencies, pinned away from the compromised releases. Pin to ${LAST_SAFE_VERSION} or earlier if you want the last known safe release from this incident window.`,
   },
   PREVIOUSLY_USED: {
     bg: 'bg-warning-muted',
@@ -61,6 +62,7 @@ export default function RepoChecker() {
         files: [],
         searchHits: [],
         error: 'Something went wrong. Please check the URL and try again.',
+        warning: null,
       });
     }
     setLoading(false);
@@ -120,6 +122,12 @@ export default function RepoChecker() {
           {result?.error && (
             <div className="mt-4 p-4 bg-danger-muted border border-danger/20 rounded-lg text-danger text-sm">
               {result.error}
+            </div>
+          )}
+
+          {result?.warning && (
+            <div className="mt-4 p-4 bg-warning-muted border border-warning/20 rounded-lg text-warning text-sm">
+              {result.warning}
             </div>
           )}
 

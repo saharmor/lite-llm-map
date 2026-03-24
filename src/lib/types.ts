@@ -1,6 +1,3 @@
-export const COMPROMISED_VERSIONS = ['1.82.7', '1.82.8'] as const;
-export const LAST_SAFE_VERSION = '1.82.6';
-
 export type Status = 'COMPROMISED' | 'AT_RISK' | 'PATCHED' | 'PREVIOUSLY_USED' | 'NOT_FOUND';
 
 export interface FileCheckResult {
@@ -17,11 +14,34 @@ export interface CheckResult {
   files: FileCheckResult[];
   searchHits: SearchHit[];
   error: string | null;
+  warning: string | null;
 }
 
 export interface SearchHit {
   filePath: string;
   matchFragment: string;
+}
+
+export interface RepositoryContext {
+  owner: string;
+  repo: string;
+  repoFullName: string;
+  defaultBranch: string;
+}
+
+export interface DependencyFileContent {
+  path: string;
+  content: string;
+}
+
+export interface DependencyScanResult {
+  files: DependencyFileContent[];
+  incomplete: boolean;
+}
+
+export interface CodeSearchResult {
+  hits: SearchHit[];
+  incomplete: boolean;
 }
 
 export interface AffectedProject {
@@ -47,10 +67,6 @@ export const KNOWN_AFFECTED_PROJECTS: AffectedProject[] = [
 
 export const DEPENDENCY_FILES = [
   'requirements.txt',
-  'requirements/base.txt',
-  'requirements/main.txt',
-  'requirements/prod.txt',
-  'requirements/dev.txt',
   'setup.py',
   'setup.cfg',
   'pyproject.toml',
