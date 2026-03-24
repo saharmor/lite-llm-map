@@ -9,28 +9,28 @@ const STATUS_CONFIG: Record<Status, { bg: string; border: string; text: string; 
     border: 'border-danger/30',
     text: 'text-danger',
     label: 'Currently compromised',
-    description: `A compromised version (${COMPROMISED_VERSIONS.join(' or ')}) is pinned in your dependency files. Rotate all credentials immediately.`,
+    description: `A compromised version (${COMPROMISED_VERSIONS.join(' or ')}) is pinned in this repository's dependency files. Rotate all credentials immediately.`,
   },
   AT_RISK: {
     bg: 'bg-warning-muted',
     border: 'border-warning/30',
     text: 'text-warning',
     label: 'Currently at risk',
-    description: 'LiteLLM is in your dependencies without a safe version pin. You may have installed a compromised version.',
+    description: 'LiteLLM is listed in this repository\'s dependencies without a safe version pin. A compromised version may have been installed. See the affected files below.',
   },
   PATCHED: {
     bg: 'bg-success-muted',
     border: 'border-success/30',
     text: 'text-success',
     label: 'Patched',
-    description: `LiteLLM is in your dependencies, pinned away from the compromised releases. Pin to ${LAST_SAFE_VERSION} or earlier if you want the last known safe release from this incident window.`,
+    description: `LiteLLM is in this repository's dependencies, pinned away from the compromised releases. Pin to ${LAST_SAFE_VERSION} or earlier for the last known safe release from this incident window.`,
   },
   PREVIOUSLY_USED: {
     bg: 'bg-warning-muted',
     border: 'border-warning/30',
     text: 'text-warning',
     label: 'Previously used',
-    description: 'LiteLLM was found in your codebase but is no longer a direct dependency. If it was installed during the compromise window, credentials may have been exposed.',
+    description: 'LiteLLM was found in this repository but is no longer a direct dependency. If it was installed during the compromise window, credentials may have been exposed.',
   },
   NOT_FOUND: {
     bg: 'bg-success-muted',
@@ -41,12 +41,41 @@ const STATUS_CONFIG: Record<Status, { bg: string; border: string; text: string; 
   },
 };
 
+const TOKEN_PHRASE = 'Add a GitHub token';
+
+function MessageWithTokenLink({ text, onTokenClick }: { text: string; onTokenClick: () => void }) {
+  const parts = text.split(TOKEN_PHRASE);
+  if (parts.length === 1) return <>{text}</>;
+  return (
+    <>
+      {parts.map((part, i) => (
+        <span key={i}>
+          {part}
+          {i < parts.length - 1 && (
+            <button
+              onClick={onTokenClick}
+              className="underline font-medium cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              {TOKEN_PHRASE}
+            </button>
+          )}
+        </span>
+      ))}
+    </>
+  );
+}
+
 export default function RepoChecker() {
   const [url, setUrl] = useState('');
   const [token, setToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
+
+  const openTokenField = () => {
+    setShowToken(true);
+    setTimeout(() => document.getElementById('token-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+  };
 
   const handleCheck = async () => {
     if (!url.trim()) return;
@@ -112,6 +141,7 @@ export default function RepoChecker() {
           {showToken && (
             <div className="mt-2 space-y-2">
               <input
+                id="token-input"
                 type="password"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
@@ -133,13 +163,13 @@ export default function RepoChecker() {
 
           {result?.error && (
             <div className="mt-4 p-4 bg-danger-muted border border-danger/20 rounded-lg text-danger text-sm">
-              {result.error}
+              <MessageWithTokenLink text={result.error} onTokenClick={openTokenField} />
             </div>
           )}
 
           {result?.warning && (
             <div className="mt-4 p-4 bg-warning-muted border border-warning/20 rounded-lg text-warning text-sm">
-              {result.warning}
+              <MessageWithTokenLink text={result.warning} onTokenClick={openTokenField} />
             </div>
           )}
 
@@ -163,8 +193,14 @@ export default function RepoChecker() {
                   {result.files.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {result.files.map((f, i) => (
-                        <div key={i} className="flex items-center justify-between bg-white/60 rounded-lg px-3 py-2 text-sm">
-                          <span className="font-mono text-text-primary truncate">{f.filePath}</span>
+                        <a
+                          key={i}
+                          href={`https://github.com/${result.repoFullName}/blob/HEAD/${f.filePath}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between bg-white/60 hover:bg-white/90 rounded-lg px-3 py-2 text-sm transition-colors group"
+                        >
+                          <span className="font-mono text-text-primary truncate group-hover:underline">{f.filePath}</span>
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded flex-none ml-2 ${
                             f.status === 'COMPROMISED' ? 'bg-danger/10 text-danger' :
                             f.status === 'AT_RISK' ? 'bg-warning/10 text-warning' :
@@ -172,7 +208,7 @@ export default function RepoChecker() {
                           }`}>
                             {f.versionSpec || 'unpinned'}
                           </span>
-                        </div>
+                        </a>
                       ))}
                     </div>
                   )}
