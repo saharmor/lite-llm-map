@@ -1,4 +1,4 @@
-import { COMPROMISED_VERSIONS, type RiskLevel, type FileCheckResult, type CheckResult, type SearchHit } from './types';
+import { COMPROMISED_VERSIONS, type Status, type FileCheckResult, type CheckResult, type SearchHit } from './types';
 import { parseGitHubUrl, fetchAllDependencyFiles, searchCodeForLitellm } from './github';
 
 function parseVersion(v: string): number[] {
@@ -104,26 +104,26 @@ function extractLitellmSpec(content: string, filePath: string): { found: boolean
   return { found: false, versionSpec: null, exactVersion: null };
 }
 
-function assessFileRisk(spec: { found: boolean; versionSpec: string | null; exactVersion: string | null }): RiskLevel {
-  if (!spec.found) return 'SAFE';
+function assessFileStatus(spec: { found: boolean; versionSpec: string | null; exactVersion: string | null }): Status {
+  if (!spec.found) return 'NOT_FOUND';
 
   if (spec.exactVersion) {
-    return COMPROMISED_VERSIONS.includes(spec.exactVersion as typeof COMPROMISED_VERSIONS[number]) ? 'CRITICAL' : 'LOW';
+    return COMPROMISED_VERSIONS.includes(spec.exactVersion as typeof COMPROMISED_VERSIONS[number]) ? 'COMPROMISED' : 'PATCHED';
   }
 
-  if (!spec.versionSpec) return 'HIGH';
+  if (!spec.versionSpec) return 'AT_RISK';
 
   for (const cv of COMPROMISED_VERSIONS) {
-    if (versionInRange(cv, spec.versionSpec)) return 'HIGH';
+    if (versionInRange(cv, spec.versionSpec)) return 'AT_RISK';
   }
 
-  return 'LOW';
+  return 'PATCHED';
 }
 
 export async function checkRepository(url: string, token?: string): Promise<CheckResult> {
   const parsed = parseGitHubUrl(url);
   if (!parsed) {
-    return { repoFullName: url, overallRisk: 'SAFE', files: [], searchHits: [], error: 'Invalid GitHub URL. Use format: github.com/owner/repo or owner/repo' };
+    return { repoFullName: url, currentStatus: 'NOT_FOUND', files: [], searchHits: [], error: 'Invalid GitHub URL. Use format: github.com/owner/repo or owner/repo' };
   }
 
   const { owner, repo } = parsed;
@@ -142,7 +142,7 @@ export async function checkRepository(url: string, token?: string): Promise<Chec
         found: spec.found,
         versionSpec: spec.versionSpec,
         exactVersion: spec.exactVersion,
-        riskLevel: assessFileRisk(spec),
+        status: assessFileStatus(spec),
       };
     }).filter(f => f.found);
 
@@ -151,27 +151,31 @@ export async function checkRepository(url: string, token?: string): Promise<Chec
       matchFragment: r.fragment,
     }));
 
-    const riskPriority: Record<RiskLevel, number> = { CRITICAL: 3, HIGH: 2, LOW: 1, SAFE: 0 };
-    let overallRisk: RiskLevel = 'SAFE';
+    const statusPriority: Record<Status, number> = { COMPROMISED: 4, AT_RISK: 3, PATCHED: 2, PREVIOUSLY_USED: 1, NOT_FOUND: 0 };
+    let currentStatus: Status = 'NOT_FOUND';
     for (const f of files) {
-      if (riskPriority[f.riskLevel] > riskPriority[overallRisk]) {
-        overallRisk = f.riskLevel;
+      if (statusPriority[f.status] > statusPriority[currentStatus]) {
+        currentStatus = f.status;
       }
     }
 
-    if (overallRisk === 'SAFE' && searchHits.length > 0) {
+    if (currentStatus === 'NOT_FOUND' && searchHits.length > 0) {
       const hitsDeps = searchHits.some(h =>
         /requirements|setup\.|pyproject|pipfile|poetry|\.lock/i.test(h.filePath)
       );
-      if (hitsDeps) overallRisk = 'HIGH';
+      if (hitsDeps) {
+        currentStatus = 'PREVIOUSLY_USED';
+      } else if (searchHits.some(h => /\.py$|\.cfg$|\.toml$|\.txt$/i.test(h.filePath))) {
+        currentStatus = 'PREVIOUSLY_USED';
+      }
     }
 
-    return { repoFullName, overallRisk, files, searchHits, error: null };
+    return { repoFullName, currentStatus, files, searchHits, error: null };
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error';
     if (msg.includes('rate limit') || msg.includes('403')) {
-      return { repoFullName, overallRisk: 'SAFE', files: [], searchHits: [], error: 'GitHub API rate limit exceeded. Try adding a GitHub token for higher limits.' };
+      return { repoFullName, currentStatus: 'NOT_FOUND', files: [], searchHits: [], error: 'GitHub API rate limit exceeded. Try adding a GitHub token for higher limits.' };
     }
-    return { repoFullName, overallRisk: 'SAFE', files: [], searchHits: [], error: `Failed to check repository: ${msg}` };
+    return { repoFullName, currentStatus: 'NOT_FOUND', files: [], searchHits: [], error: `Failed to check repository: ${msg}` };
   }
 }

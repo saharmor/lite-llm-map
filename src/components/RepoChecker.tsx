@@ -1,12 +1,43 @@
 import { useState } from 'react';
 import { checkRepository } from '../lib/checker';
-import type { CheckResult, RiskLevel } from '../lib/types';
+import type { CheckResult, Status } from '../lib/types';
 
-const RISK_STYLES: Record<RiskLevel, { bg: string; border: string; text: string; icon: string; label: string }> = {
-  CRITICAL: { bg: 'bg-red-50', border: 'border-red-400', text: 'text-red-800', icon: '🚨', label: 'CRITICAL — Compromised version detected' },
-  HIGH: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-800', icon: '⚠️', label: 'HIGH RISK — LiteLLM found, may include compromised versions' },
-  LOW: { bg: 'bg-yellow-50', border: 'border-yellow-400', text: 'text-yellow-800', icon: '📋', label: 'LOW RISK — LiteLLM found but pinned to safe version' },
-  SAFE: { bg: 'bg-green-50', border: 'border-green-400', text: 'text-green-800', icon: '✅', label: 'SAFE — No LiteLLM dependency detected' },
+const STATUS_CONFIG: Record<Status, { bg: string; border: string; text: string; label: string; description: string }> = {
+  COMPROMISED: {
+    bg: 'bg-danger-muted',
+    border: 'border-danger/30',
+    text: 'text-danger',
+    label: 'Currently compromised',
+    description: 'A compromised version (1.82.7 or 1.82.8) is pinned in your lockfile. Rotate all credentials immediately.',
+  },
+  AT_RISK: {
+    bg: 'bg-warning-muted',
+    border: 'border-warning/30',
+    text: 'text-warning',
+    label: 'Currently at risk',
+    description: 'LiteLLM is in your dependencies without a safe version pin. You may have installed a compromised version.',
+  },
+  PATCHED: {
+    bg: 'bg-success-muted',
+    border: 'border-success/30',
+    text: 'text-success',
+    label: 'Patched',
+    description: 'LiteLLM is in your dependencies, pinned to a safe version. If you previously ran an unpinned install, credentials may still have been exposed.',
+  },
+  PREVIOUSLY_USED: {
+    bg: 'bg-warning-muted',
+    border: 'border-warning/30',
+    text: 'text-warning',
+    label: 'Previously used',
+    description: 'LiteLLM was found in your codebase but is no longer a direct dependency. If it was installed during the compromise window, credentials may have been exposed.',
+  },
+  NOT_FOUND: {
+    bg: 'bg-success-muted',
+    border: 'border-success/30',
+    text: 'text-success',
+    label: 'Not affected',
+    description: 'No trace of LiteLLM found in this repository.',
+  },
 };
 
 export default function RepoChecker() {
@@ -26,7 +57,7 @@ export default function RepoChecker() {
     } catch {
       setResult({
         repoFullName: url,
-        overallRisk: 'SAFE',
+        currentStatus: 'NOT_FOUND',
         files: [],
         searchHits: [],
         error: 'Something went wrong. Please check the URL and try again.',
@@ -35,137 +66,108 @@ export default function RepoChecker() {
     setLoading(false);
   };
 
-  const style = result ? RISK_STYLES[result.overallRisk] : null;
+  const config = result ? STATUS_CONFIG[result.currentStatus] : null;
 
   return (
-    <section id="checker" className="bg-white border-b border-gray-200">
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Check your project</h2>
-        <p className="text-gray-600 mb-6">
-          Paste a GitHub repository URL to check if it uses or has used a compromised LiteLLM version.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-3 mb-3">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
-            placeholder="https://github.com/owner/repo"
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-          />
-          <button
-            onClick={handleCheck}
-            disabled={loading || !url.trim()}
-            className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Checking...
-              </span>
-            ) : (
-              'Check Repository'
-            )}
-          </button>
-        </div>
-
-        <button
-          onClick={() => setShowToken(!showToken)}
-          className="text-sm text-gray-500 hover:text-gray-700 mb-4"
-        >
-          {showToken ? '▾ Hide' : '▸ Optional:'} GitHub token for higher rate limits
-        </button>
-
-        {showToken && (
-          <input
-            type="password"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (optional, stays in your browser)"
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
-          />
-        )}
-
-        {result?.error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {result.error}
+    <section id="checker" className="pb-8">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="bg-white/60 backdrop-blur rounded-xl border border-border p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-3 mb-2">
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
+              placeholder="https://github.com/owner/repo"
+              className="flex-1 px-4 py-3 bg-ivory border border-border-strong rounded-lg text-base font-[family-name:var(--font-body)] focus:outline-none focus:ring-2 focus:ring-clay/40 focus:border-clay placeholder:text-text-tertiary"
+            />
+            <button
+              onClick={handleCheck}
+              disabled={loading || !url.trim()}
+              className="px-6 py-3 bg-clay text-white font-semibold rounded-lg hover:bg-clay-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap cursor-pointer"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Checking...
+                </span>
+              ) : (
+                'Check'
+              )}
+            </button>
           </div>
-        )}
 
-        {result && !result.error && style && (
-          <div className={`mt-6 p-6 ${style.bg} border-2 ${style.border} rounded-xl`}>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">{style.icon}</span>
-              <div className="flex-1">
-                <h3 className={`text-lg font-bold ${style.text}`}>{style.label}</h3>
-                <p className={`text-sm mt-1 ${style.text} opacity-80`}>
-                  Repository: <span className="font-mono font-semibold">{result.repoFullName}</span>
-                </p>
+          <button
+            onClick={() => setShowToken(!showToken)}
+            className="text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
+          >
+            {showToken ? 'Hide token field' : 'Add GitHub token for higher rate limits'}
+          </button>
 
-                {result.files.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className={`text-sm font-semibold ${style.text} mb-2`}>Dependency files with LiteLLM:</h4>
-                    <div className="space-y-2">
+          {showToken && (
+            <input
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="ghp_xxxx (optional, stays in your browser)"
+              className="w-full mt-2 px-3 py-2 bg-ivory border border-border rounded-lg text-sm font-[family-name:var(--font-body)] focus:outline-none focus:ring-2 focus:ring-clay/40 placeholder:text-text-tertiary"
+            />
+          )}
+
+          {result?.error && (
+            <div className="mt-4 p-4 bg-danger-muted border border-danger/20 rounded-lg text-danger text-sm">
+              {result.error}
+            </div>
+          )}
+
+          {result && !result.error && config && (
+            <div className={`mt-5 p-5 ${config.bg} border ${config.border} rounded-xl`}>
+              <div className="flex items-start gap-3">
+                <div className={`flex-none w-2 h-2 rounded-full mt-2 ${
+                  result.currentStatus === 'COMPROMISED' ? 'bg-danger' :
+                  result.currentStatus === 'AT_RISK' || result.currentStatus === 'PREVIOUSLY_USED' ? 'bg-warning' :
+                  'bg-success'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <h3 className={`text-lg font-semibold font-[family-name:var(--font-heading)] ${config.text}`}>
+                      {config.label}
+                    </h3>
+                    <span className="text-text-tertiary text-sm font-mono truncate">{result.repoFullName}</span>
+                  </div>
+                  <p className="text-text-secondary text-sm mt-1">{config.description}</p>
+
+                  {result.files.length > 0 && (
+                    <div className="mt-4 space-y-2">
                       {result.files.map((f, i) => (
-                        <div key={i} className="bg-white/70 rounded-lg p-3 text-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-gray-800">{f.filePath}</span>
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                              f.riskLevel === 'CRITICAL' ? 'bg-red-200 text-red-800' :
-                              f.riskLevel === 'HIGH' ? 'bg-orange-200 text-orange-800' :
-                              f.riskLevel === 'LOW' ? 'bg-yellow-200 text-yellow-800' :
-                              'bg-green-200 text-green-800'
-                            }`}>{f.riskLevel}</span>
-                          </div>
-                          {f.versionSpec && (
-                            <p className="text-gray-600 mt-1">
-                              Version: <span className="font-mono">{f.versionSpec}</span>
-                            </p>
-                          )}
-                          {!f.versionSpec && (
-                            <p className="text-gray-600 mt-1">No version pinned (could install any version)</p>
-                          )}
+                        <div key={i} className="flex items-center justify-between bg-white/60 rounded-lg px-3 py-2 text-sm">
+                          <span className="font-mono text-text-primary truncate">{f.filePath}</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded flex-none ml-2 ${
+                            f.status === 'COMPROMISED' ? 'bg-danger/10 text-danger' :
+                            f.status === 'AT_RISK' ? 'bg-warning/10 text-warning' :
+                            'bg-success/10 text-success'
+                          }`}>
+                            {f.versionSpec || 'unpinned'}
+                          </span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {result.searchHits.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className={`text-sm font-semibold ${style.text} mb-2`}>Other files referencing LiteLLM:</h4>
-                    <div className="space-y-1">
-                      {result.searchHits.slice(0, 10).map((h, i) => (
-                        <div key={i} className="text-sm font-mono text-gray-700">
-                          {h.filePath}
-                        </div>
-                      ))}
-                      {result.searchHits.length > 10 && (
-                        <div className="text-sm text-gray-500">...and {result.searchHits.length - 10} more</div>
-                      )}
+                  {result.searchHits.length > 0 && result.files.length === 0 && (
+                    <div className="mt-3 text-xs text-text-tertiary">
+                      Found in: {result.searchHits.slice(0, 5).map(h => h.filePath).join(', ')}
+                      {result.searchHits.length > 5 && ` +${result.searchHits.length - 5} more`}
                     </div>
-                  </div>
-                )}
-
-                {result.overallRisk !== 'SAFE' && (
-                  <div className="mt-4 pt-4 border-t border-current/10">
-                    <p className={`text-sm font-medium ${style.text}`}>
-                      {result.overallRisk === 'CRITICAL'
-                        ? 'Immediate action required: rotate ALL credentials on systems where this was installed.'
-                        : result.overallRisk === 'HIGH'
-                        ? 'Check if litellm 1.82.7 or 1.82.8 was ever installed. If so, rotate all credentials immediately.'
-                        : 'Your version appears safe, but verify no transitive dependency pulled a compromised version.'}
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </section>
   );
