@@ -11,8 +11,8 @@ export default function Remediation() {
         <div className="bg-white/60 border border-border rounded-xl p-5 space-y-3">
           {[
             { n: '1', text: <>Check for <code className="bg-surface-raised px-1 rounded text-sm">litellm_init.pth</code> in your <code className="bg-surface-raised px-1 rounded text-sm">site-packages/</code></> },
-            { n: '2', text: <><strong>Rotate all credentials</strong> on any machine where litellm 1.82.7+ was installed — SSH keys, API tokens, cloud creds, DB passwords</> },
-            { n: '3', text: <>Audit CI/CD pipelines — if litellm was installed during CI, those secrets are compromised too</> },
+            { n: '2', text: <><strong>Rotate all credentials</strong> on any machine where litellm 1.82.7+ was installed: SSH keys, API tokens, cloud creds, DB passwords</> },
+            { n: '3', text: <>Audit CI/CD pipelines; if litellm was installed during CI, those secrets are compromised too</> },
             { n: '4', text: <>Pin to <code className="bg-surface-raised px-1 rounded text-sm font-semibold">litellm==1.82.6</code> or earlier</> },
           ].map(({ n, text }) => (
             <div key={n} className="flex gap-3 text-sm text-text-secondary">

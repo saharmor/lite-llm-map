@@ -10,7 +10,7 @@ export default function AffectedProjects() {
       <div className="max-w-2xl mx-auto px-4">
         <h2 className="text-2xl font-bold text-text-primary mb-1">Known affected projects</h2>
         <p className="text-text-tertiary text-sm mb-4">
-          Not exhaustive — any project depending on litellm may be affected.
+          Not exhaustive, any project depending on litellm may be affected.
         </p>
 
         <div className="grid sm:grid-cols-2 gap-2">

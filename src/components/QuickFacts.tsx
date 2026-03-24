@@ -32,7 +32,7 @@ export default function QuickFacts() {
             </div>
             <p className="text-sm text-text-secondary">
               Added a <code className="bg-surface-raised px-1 rounded text-xs">.pth</code> file that
-              runs on <strong>any Python startup</strong> — no import needed.
+              runs on <strong>any Python startup</strong>, no import needed.
             </p>
           </div>
         </div>
@@ -53,19 +53,19 @@ export default function QuickFacts() {
         {expanded && (
           <ol className="mt-4 space-y-3 text-sm text-text-secondary border-l-2 border-border pl-4">
             <li>
-              <strong className="text-text-primary">Trivy hijacked</strong> — TeamPCP pushed malicious Trivy versions that
+              <strong className="text-text-primary">Trivy hijacked</strong>: TeamPCP pushed malicious Trivy versions that
               steal CI/CD secrets via Cloudflare Tunnels.
             </li>
             <li>
-              <strong className="text-text-primary">LiteLLM CI ran poisoned Trivy</strong> — without version pinning, CI
+              <strong className="text-text-primary">LiteLLM CI ran poisoned Trivy</strong>: without version pinning, CI
               pulled the compromised Trivy which exfiltrated <code className="bg-surface-raised px-1 rounded">PYPI_PUBLISH_PASSWORD</code>.
             </li>
             <li>
-              <strong className="text-text-primary">Attacker published to PyPI</strong> — versions 1.82.7 and 1.82.8 were
+              <strong className="text-text-primary">Attacker published to PyPI</strong>: versions 1.82.7 and 1.82.8 were
               uploaded directly (they never existed on GitHub).
             </li>
             <li>
-              <strong className="text-text-primary">Credentials exfiltrated</strong> — the malware collects SSH keys,
+              <strong className="text-text-primary">Credentials exfiltrated</strong>: the malware collects SSH keys,
               cloud credentials, API tokens, crypto wallets, and more, encrypted with AES-256 + RSA-4096
               and sent to <code className="bg-surface-raised px-1 rounded">models.litellm.cloud</code>.
             </li>
