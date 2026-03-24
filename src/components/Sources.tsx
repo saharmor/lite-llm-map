@@ -26,12 +26,28 @@ export default function Sources() {
             </a>
           ))}
         </div>
-        <p className="mt-6 text-xs text-text-tertiary">
-          Built to help the community.{' '}
-          <a href="https://github.com/saharmor/lite-llm-map" target="_blank" rel="noopener noreferrer" className="hover:text-clay transition-colors underline">
-            Source on GitHub
-          </a>
-        </p>
+        <div className="mt-8 pt-6 border-t border-border/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-text-tertiary">
+          <p>
+            Built by{' '}
+            <a href="https://saharmor.me" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-text-secondary transition-colors">
+              Sahar Mor
+            </a>
+          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <a href="https://github.com/saharmor/lite-llm-map" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">
+              Source on GitHub
+            </a>
+            <a href="https://promptclaude.dev" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">
+              Prompt Claude
+            </a>
+            <a href="https://toolsuse.dev" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">
+              Tool Calls Schema Generator
+            </a>
+            <a href="https://sidekickdev.com" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">
+              Sidekick Dev
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   );
