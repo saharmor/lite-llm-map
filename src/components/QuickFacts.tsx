@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { COMPROMISED_VERSIONS, LAST_SAFE_VERSION } from '../lib/constants';
 
 export default function QuickFacts() {
   const [expanded, setExpanded] = useState(false);
@@ -18,7 +19,7 @@ export default function QuickFacts() {
           <div className="bg-white/60 border border-border rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-danger/10 text-danger text-xs font-semibold px-2 py-0.5 rounded">Malicious</span>
-              <code className="text-text-primary font-semibold">v1.82.7</code>
+              <code className="text-text-primary font-semibold">v{COMPROMISED_VERSIONS[0]}</code>
             </div>
             <p className="text-sm text-text-secondary">
               Payload in <code className="bg-surface-raised px-1 rounded text-xs">proxy_server.py</code>.
@@ -28,7 +29,7 @@ export default function QuickFacts() {
           <div className="bg-white/60 border border-danger/20 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-danger text-white text-xs font-semibold px-2 py-0.5 rounded">Most dangerous</span>
-              <code className="text-text-primary font-semibold">v1.82.8</code>
+              <code className="text-text-primary font-semibold">v{COMPROMISED_VERSIONS[1]}</code>
             </div>
             <p className="text-sm text-text-secondary">
               Added a <code className="bg-surface-raised px-1 rounded text-xs">.pth</code> file that
@@ -38,7 +39,7 @@ export default function QuickFacts() {
         </div>
 
         <div className="text-sm text-text-tertiary mb-4">
-          Last safe version: <code className="font-semibold text-success">v1.82.6</code>
+          Last safe version: <code className="font-semibold text-success">v{LAST_SAFE_VERSION}</code>
           <span className="mx-2">&middot;</span>
           Both malicious versions have been yanked from PyPI.
         </div>
@@ -61,7 +62,7 @@ export default function QuickFacts() {
               pulled the compromised Trivy which exfiltrated <code className="bg-surface-raised px-1 rounded">PYPI_PUBLISH_PASSWORD</code>.
             </li>
             <li>
-              <strong className="text-text-primary">Attacker published to PyPI</strong>: versions 1.82.7 and 1.82.8 were
+              <strong className="text-text-primary">Attacker published to PyPI</strong>: versions {COMPROMISED_VERSIONS[0]} and {COMPROMISED_VERSIONS[1]} were
               uploaded directly (they never existed on GitHub).
             </li>
             <li>

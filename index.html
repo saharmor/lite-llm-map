@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/lite-llm-map/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,10 +12,17 @@
     <meta property="og:title" content="LiteLLM Compromise Checker" />
     <meta property="og:description" content="LiteLLM v1.82.7 and v1.82.8 were compromised with credential-stealing malware. Check if your project is affected." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://saharmor.github.io/lite-llm-map/" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="LiteLLM Compromise Checker" />
     <meta name="twitter:description" content="Check if your Python project was affected by the LiteLLM supply chain attack." />
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J36Y7VH176"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-J36Y7VH176');
+    </script>
   </head>
   <body>
     <div id="root"></div>
