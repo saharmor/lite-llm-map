@@ -1,3 +1,5 @@
+import { SOURCE_REPO_URL } from '../lib/constants';
+
 const SOURCES = [
   { title: 'Original security report (#24512)', url: 'https://github.com/BerriAI/litellm/issues/24512' },
   { title: 'LiteLLM team response (#24518)', url: 'https://github.com/BerriAI/litellm/issues/24518' },
@@ -34,7 +36,7 @@ export default function Sources() {
             </a>
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <a href="https://github.com/saharmor/lite-llm-map" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">
+            <a href={SOURCE_REPO_URL} target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">
               Source on GitHub
             </a>
             <a href="https://promptclaude.dev" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">
